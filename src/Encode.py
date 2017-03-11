@@ -28,3 +28,12 @@ class Encoder(object):
         if frame_class is None:
             raise Exception('There is no frame type: ' + command)
         return frame_class
+
+    def convert_frame_to_ascii(self, frame):
+        ascii_command = Frames.FRAMES.keys()[Frames.FRAMES.values().index(type(frame))]
+        ascii_headers = ''
+        for k, v in frame.headers:
+            ascii_headers += str(k) + ':' + str(v) + '\n'
+        ascii_msg = frame.msg
+        ascii_frame = ascii_command + ascii_headers + ascii_msg + Frames.NULL
+        return ascii_frame

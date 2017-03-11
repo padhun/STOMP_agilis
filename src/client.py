@@ -10,7 +10,7 @@ class Client(object):
         self.encoder = Encoder()
 
     def connect(self,accept_version,host,**kwargs):
-        connect_frame = self.encoder.encode('CONNECT',accept_version,host,**kwargs)
+        connect_frame = self.encoder.encode('CONNECT',**kwargs)
         self.send_frame(connect_frame)
 
     def send_frame(self,frame):

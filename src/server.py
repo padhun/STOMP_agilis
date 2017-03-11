@@ -11,7 +11,7 @@ class Server(object):
     def __init__(self):
         self.decoder = Decoder()
         self.encoder = Encoder()
-        self.supperted_versions = ['1.2']
+        self.supported_versions = ['1.2']
 
     def listener(self,msg):
         frame = self.decoder.decode(msg)

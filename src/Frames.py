@@ -1,4 +1,5 @@
 
+NULL = '\x00'
 
 class BaseFrame(object):
     def __init__(self,msg=None):
@@ -149,8 +150,8 @@ class MESSAGE(BaseFrame):
         REQUIRED: destination, message-id, subscription
         OPTIONAL: ack
     """
-    def __init__(self, destination, message_id, subscription, **kwargs):
-        BaseFrame.__init__(self)
+    def __init__(self, destination, message_id, subscription,message, **kwargs):
+        BaseFrame.__init__(self,message)
         self.destination = destination
         self.message_id = message_id
         self.subscription = subscription

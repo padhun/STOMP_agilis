@@ -30,6 +30,8 @@ class Encoder(object):
         return frame_class
 
     def convert_frame_to_ascii(self, frame):
+        """
+        """
         ascii_command = Frames.FRAMES.keys()[Frames.FRAMES.values().index(type(frame))]
         ascii_headers = ''
         for k, v in frame.headers:

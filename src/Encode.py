@@ -36,6 +36,7 @@ class Encoder(object):
         ascii_headers = ''
         for k, v in frame.headers:
             ascii_headers += str(k) + ':' + str(v) + '\n'
+        ascii_headers += '\n'
         ascii_msg = frame.msg
         ascii_frame = ascii_command + ascii_headers + ascii_msg + Frames.NULL
         return ascii_frame

@@ -1,3 +1,22 @@
+"""
+client-command      = "SEND"
+                      | "SUBSCRIBE"
+                      | "UNSUBSCRIBE"
+                      | "BEGIN"
+                      | "COMMIT"
+                      | "ABORT"
+                      | "ACK"
+                      | "NACK"
+                      | "DISCONNECT"
+                      | "CONNECT"
+                      | "STOMP"
+
+server-command      = "CONNECTED"
+                      | "MESSAGE"
+                      | "RECEIPT"
+                      | "ERROR"
+"""
+
 NULL = '\x00'
 
 
@@ -193,4 +212,22 @@ class ERROR(BaseFrame):
 
     def __init__(self, **kwargs):
         BaseFrame.__init__(self)
-        self.message = kwargs.get('message')
+
+FRAMES={
+    "CONNECT":CONNECT,
+    "STOMP":STOMP,
+    "CONNECTED":CONNECTED,
+    "SEND":SEND,
+    "SUBSCRIBE":SUBSCRIBE,
+    "UNSUBSCRIBE":UNSUBSCRIBE,
+    "ACK":ACK,
+    "NACK":NACK,
+    "BEGIN":BEGIN,
+    "COMMIT":COMMIT,
+    "ABORT":ABORT,
+    "DISCONNECT":DISCONNECT,
+    "MESSAGE":MESSAGE,
+    "RECEIPT":RECEIPT,
+    "ERROR":ERROR
+}
+

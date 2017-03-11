@@ -1,4 +1,4 @@
-from Frames import *
+import Frames
 
 
 class Encoder(object):
@@ -9,13 +9,22 @@ class Encoder(object):
         pass
 
     def encode(self,command,**kwargs):
-        if command == 'CONNECT':
-            frame = self.create_connect_frame(**kwargs)
+        """
+        Use variable keyword argument syntax if calling with keywords containing hyphen as keywords can't contain hyphen
+        http://stackoverflow.com/a/24121330
+        e.g:
+        Instead of encode("RECEIPT",receipt-id=10) <- contains hyphen
+        Use: encode("RECEIPT", **{"receipt-id":10})
+        """
+        frame_class=self.get_frame_class(command)
+        frame = frame_class(**kwargs)
+        if not frame.has_required():
+            raise Exception(command + 'frame REQUIRES headers: '+",".join(frame.required_headers()))
 
         return frame
 
-    def create_connect_frame(self,**kwargs):
-        connect_frame = CONNECT(**kwargs)
-        if not connect_frame.has_required():
-            raise Exception('CONNECT frame REQUIRES host and accept-version headers.')
-        return connect_frame
+    def get_frame_class(self,command):
+        frame_class = Frames.FRAMES.get(command)
+        if frame_class is None:
+            raise Exception('There is no frame type: ' + command)
+        return frame_class

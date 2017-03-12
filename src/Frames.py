@@ -25,9 +25,11 @@ class BaseFrame(object):
     headers={}
     required_headers=()
 
-    def __init__(self,msg=None,**kwargs):
-        self.msg = msg
-        self.headers.update(kwargs)
+    def __init__(self,**kwargs):
+        self.msg = None
+        if kwargs.has_key('msg'):
+            self.msg = kwargs.pop('msg')
+        self.headers.update(**kwargs)
 
     def has_required(self):
         if set(self.required_headers) <= self.headers.viewkeys():
@@ -35,6 +37,19 @@ class BaseFrame(object):
         else:
             return False
 
+    def __str__(self):
+        """
+        """
+        ascii_command = FRAMES.keys()[FRAMES.values().index(type(self))] + '\n'
+        ascii_headers = ''
+        ascii_msg = ''
+        for k, v in self.headers.iteritems():
+            ascii_headers += str(k) + ':' + str(v) + '\n'
+        ascii_headers += '\n'
+        if self.msg is not None:
+            ascii_msg = self.msg
+        ascii_frame = ascii_command + ascii_headers + ascii_msg + (NULL if NULL not in ascii_msg else '')
+        return ascii_frame
 
 class CONNECT(BaseFrame):
     """
@@ -211,7 +226,7 @@ class ERROR(BaseFrame):
     """
 
     def __init__(self, **kwargs):
-        BaseFrame.__init__(self)
+        BaseFrame.__init__(self,**kwargs)
 
 FRAMES={
     "CONNECT":CONNECT,

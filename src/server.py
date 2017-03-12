@@ -6,10 +6,18 @@ import socket
 
 class Server(object):
     """
-
+    Server class for STOMP server functionality.
+    Listen on a given socket and respond to STOMP clients depends on the input message.
     """
 
     def __init__(self):
+        """
+        Server class initialization.
+        decoder: Decoder class object. Supports making STOMP frames from TCP messages.
+        encoder: Encoder class object. Supports making STOMP frames from commands.
+        supported_versions: tells which STOMP version supported by the server.
+        serversocket: TCP socket for the communication
+        """
         self.decoder = Decoder()
         self.encoder = Encoder()
         self.supported_versions = ['1.2']
@@ -17,15 +25,30 @@ class Server(object):
         self.serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def receive(self,msg,connection):
+        """
+        This method called when the server get a message from a client.
+        First it decodes the msg to a frame. After that call a function depends on the frame's command.
+        :param msg: received TCP message
+        :param connection: active TCP connection with one of the client
+        :return:
+        """
         try:
             frame = self.decoder.decode(msg)
-            print 'Server received frame: \n' + str(frame)
+            print 'Server received frame: \n' + str(frame) + '\n'
             self.requests.get(type(frame).__name__)(self,frame,connection)
         except Exception as ex:
             print ex
             raise
 
     def connect_received(self,request_frame,connection):
+        """
+        This method called when the server get CONNECT frame.
+        If the client and server do not share any common protocol versions, raise an exception
+        else the server responds with CONNECTED frame.
+        :param request_frame: Decoded frame from client message
+        :param connection: active TCP connection with one of the client
+        :return:
+        """
         common_versions = list(set(request_frame.headers['accept-version'].split(',')).intersection(self.supported_versions))
         if len(common_versions) == 0:
             error_message = 'Supported protocol versions are ' + str(self.supported_versions)
@@ -37,6 +60,12 @@ class Server(object):
             self.respond(str(connected_frame),connection)
 
     def respond(self,msg,connection):
+        """
+        This method called when the client sends frame, which need some respond.
+        :param msg: STOMP frame as a string
+        :param connection: active TCP connection with one of the client
+        :return:
+        """
         print 'Server will send frame: \n' + msg
         totalsent = 0
         while totalsent < len(msg):
@@ -46,6 +75,12 @@ class Server(object):
             totalsent = totalsent + sent
 
     def start(self,address,port):
+        """
+        This function starts the listening on the given address and port.
+        :param address: Address server listening on
+        :param port: Port server listening on
+        :return:
+        """
         try:
             # bind the socket to localhost, and STOMP port
             self.serversocket.bind((address, port))

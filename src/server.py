@@ -19,14 +19,13 @@ class Server(object):
     def receive(self,msg,connection):
         try:
             frame = self.decoder.decode(msg)
-            print 'Server received frame: ' + str(frame)
-            if type(frame) is Frames.CONNECT:
-                self.connect_request_received(frame,connection)
+            print 'Server received frame: \n' + str(frame)
+            self.requests.get(type(frame).__name__)(self,frame,connection)
         except Exception as ex:
             print ex
             raise
 
-    def connect_request_received(self,request_frame,connection):
+    def connect_received(self,request_frame,connection):
         common_versions = list(set(request_frame.headers['accept-version'].split(',')).intersection(self.supported_versions))
         if len(common_versions) == 0:
             error_message = 'Supported protocol versions are ' + str(self.supported_versions)
@@ -68,6 +67,33 @@ class Server(object):
                         connection.close()
         finally:
             self.serversocket.close()
+
+    def disconnect_received(self,request_frame,connection):
+        pass
+
+    def send_received(self,request_frame,connection):
+        msg_frame = self.encoder.encode('MESSAGE',**{'destination':'foo','message-id': '0','subscription':'0','msg':request_frame.msg})
+        self.respond(str(msg_frame),connection)
+
+    def subscribe_received(self,request_frame,connection):
+        pass
+
+    def unsubscribe_received(self,request_frame,connection):
+        pass
+
+    requests = {
+        'CONNECT': connect_received,
+        'DISCONNECT': disconnect_received,
+        'SEND': send_received,
+        'SUBSCRIBE': subscribe_received,
+        'UNSUBSCRIBE': unsubscribe_received
+        #'ACK': ack_received,
+        #'NACK': nack_received,
+        #'ABORT': abort_received,
+        #'COMMIT': commit_received,
+        #'BEGIN': begin_received,
+        #'STOMP': stomp_received,
+    }
 
 
 if __name__ == '__main__':

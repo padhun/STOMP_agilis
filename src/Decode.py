@@ -13,7 +13,6 @@ class Decoder(object):
         return frame_class
 
     def decode(self,message):
-        print message.split('\n\n')
         command, headers, msg = message.split('\n')[0], \
                                 message.split('\n\n')[0].split('\n')[1:], \
                                 message.split('\n\n')[1]

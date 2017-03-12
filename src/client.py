@@ -3,6 +3,7 @@ from Encode import Encoder
 from Decode import Decoder
 import Frames
 import socket
+import threading
 
 class Client(object):
     """
@@ -47,4 +48,9 @@ class Client(object):
 
 if __name__ == '__main__':
     stomp_client = Client()
-    stomp_client.connect(**{'port':1212,'accept-version':'1.2,10.1','host':'localhost'})
+    t1 = threading.Thread(target=stomp_client.connect,kwargs={'port':1212,'accept-version':'1.2,10.1','host':'localhost'})
+    t1.start()
+    threading._sleep(5)
+    msg_frame = stomp_client.encoder.encode('SEND',**{'destination': 'foo','msg': 'First message to foo'})
+    stomp_client.send(str(msg_frame))
+    t1.join()

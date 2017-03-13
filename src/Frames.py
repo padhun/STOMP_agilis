@@ -27,6 +27,7 @@ class BaseFrame(object):
 
     def __init__(self,**kwargs):
         self.msg = None
+        self.headers = {}
         if kwargs.has_key('msg'):
             self.msg = kwargs.pop('msg')
         self.headers.update(**kwargs)

@@ -26,6 +26,7 @@ class Server(object):
         # create an INET, STREAMing socket
         self.serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connection_pool = []
+        self.subscriptions = []
 
     def receive(self,msg,connection):
         """
@@ -42,7 +43,7 @@ class Server(object):
         except Exception:
             raise
 
-    def connect_received(self,request_frame,connection):
+    def connect_frame_received(self,request_frame,connection):
         """
         This method called when the server get CONNECT frame.
         If the client and server do not share any common protocol versions, raise an exception
@@ -79,6 +80,7 @@ class Server(object):
     def start(self,address,port):
         """
         This function starts the listening on the given address and port.
+        Creates a new thread after every TCP connection
         :param address: Address server listening on
         :param port: Port server listening on
         :return:
@@ -92,8 +94,8 @@ class Server(object):
             self.serversocket.listen(5)
             while True:
                 # accept connections from outside
-                (connection, address) = self.serversocket.accept()
-                t = threading.Thread(target=self.run_client_thread,kwargs={'connection': connection, 'address': address})
+                (connection, client_address) = self.serversocket.accept()
+                t = threading.Thread(target=self.run_client_thread,kwargs={'connection': connection, 'address': client_address})
                 self.connection_pool.append(t)
                 t.start()
                 #t.join()
@@ -101,6 +103,12 @@ class Server(object):
             self.serversocket.close()
 
     def run_client_thread(self,connection,address):
+        """
+        This method is waiting for messages from client.
+        :param connection: TCP connection variable
+        :param address: Client address variable
+        :return:
+        """
         while True:
             try:
                 data = connection.recv(1024)
@@ -108,28 +116,76 @@ class Server(object):
                     break
                 self.receive(data, connection)
             except Exception as ex:
-                print ex
                 connection.close()
+                raise
 
-    def disconnect_received(self,request_frame,connection):
+    def disconnect_frame_received(self,request_frame,connection):
         pass
 
-    def send_received(self,request_frame,connection):
-        msg_frame = self.encoder.encode('MESSAGE',**{'destination':'foo','message-id': '0','subscription':'0','msg':request_frame.msg})
-        self.respond(str(msg_frame),connection)
+    def send_frame_received(self,request_frame,connection):
+        """
+        When STOMP server receive SEND frame, this method forwards the frame to the right clients.
+        Check who is subscribed on the destination. Not allowed, to resend the message to the owner client.
+        :param request_frame: received SEND frame
+        :param connection: TCP connection variable, where the message came from
+        :return:
+        """
+        for sub in self.subscriptions:
+            if sub['destination'] == request_frame.headers['destination'] and sub['connection'] != connection:
+                msg_frame = self.encoder.encode('MESSAGE', **{'destination': request_frame.headers['destination'],
+                                                              'message-id': '0', 'subscription': sub['id'],
+                                                              'msg': request_frame.msg})
+                self.respond(str(msg_frame), sub['connection'])
 
-    def subscribe_received(self,request_frame,connection):
-        pass
+    def subscribe_frame_received(self,request_frame,connection):
+        """
+        Check if there is a subscription with the same id. If yes send an error message.
+        Else make the subscription, and append to the subscription list.
+        :param request_frame: received SUBSCRIBE frame from client
+        :param connection: TCP connection variable
+        :return:
+        """
+        if any(int(request_frame.headers['id']) == s['id'] for s in self.subscriptions):
+            error_message = 'Given SUBSCRIBE id: ' + request_frame.headers['id'] + ' already registered'
+            error_frame = self.encoder.encode('ERROR', **{'msg': error_message})
+            self.respond(str(error_frame), connection)
+            raise Exception("Given SUBSCRIBE id already registered!")
+        else:
+            subscription = {'id': int(request_frame.headers['id']), 'destination': request_frame.headers['destination'],
+                            'connection': connection}
+            self.subscriptions.append(subscription)
 
-    def unsubscribe_received(self,request_frame,connection):
-        pass
+    def unsubscribe_frame_received(self,request_frame,connection):
+        """
+        If no subscription with the received id, send error message.
+        If the subscription is in the list, but its not belongs to this client, send error message.
+        If everything is ok, remove subscription from the list.
+        :param request_frame: Received UNSUBSCRIBE frame
+        :param connection: TCP connection variable
+        :return:
+        """
+        if not any(int(request_frame.headers['id']) == s['id'] for s in self.subscriptions):
+            error_message = 'Given SUBSCRIBE id: ' + request_frame.headers['id'] + ' is NOT registered'
+            error_frame = self.encoder.encode('ERROR', **{'msg': error_message})
+            self.respond(str(error_frame), connection)
+            raise Exception("Given SUBSCRIBE id is NOT registered!")
+        else:
+            for sub in self.subscriptions:
+                if sub['id'] == request_frame.headers['id']:
+                    if sub['connection'] != connection:
+                        error_message = 'Given SUBSCRIBE id: ' + request_frame.headers['id'] + ' is NOT blongs to you'
+                        error_frame = self.encoder.encode('ERROR', **{'msg': error_message})
+                        self.respond(str(error_frame), connection)
+                        raise Exception("Given SUBSCRIBE id is NOT belongs to client!")
+                    else:
+                        self.subscriptions.remove(sub)
 
     requests = {
-        'CONNECT': connect_received,
-        'DISCONNECT': disconnect_received,
-        'SEND': send_received,
-        'SUBSCRIBE': subscribe_received,
-        'UNSUBSCRIBE': unsubscribe_received
+        'CONNECT': connect_frame_received,
+        'DISCONNECT': disconnect_frame_received,
+        'SEND': send_frame_received,
+        'SUBSCRIBE': subscribe_frame_received,
+        'UNSUBSCRIBE': unsubscribe_frame_received
         #'ACK': ack_received,
         #'NACK': nack_received,
         #'ABORT': abort_received,

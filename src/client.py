@@ -29,7 +29,7 @@ class Client(object):
     def receive(self,msg):
         try:
             frame = self.decoder.decode(msg)
-            print 'Client received frame: ' + str(frame)
+            print 'Client received frame: \n' + str(frame)
             if type(frame) is Frames.CONNECTED:
                 pass
         except Exception as ex:

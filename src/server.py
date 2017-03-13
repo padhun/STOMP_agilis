@@ -3,6 +3,8 @@ import Frames
 from Decode import Decoder
 from Encode import Encoder
 import socket
+import threading
+import thread
 
 class Server(object):
     """
@@ -23,6 +25,7 @@ class Server(object):
         self.supported_versions = ['1.2']
         # create an INET, STREAMing socket
         self.serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.connection_pool = []
 
     def receive(self,msg,connection):
         """
@@ -36,8 +39,7 @@ class Server(object):
             frame = self.decoder.decode(msg)
             print 'Server received frame: \n' + str(frame) + '\n'
             self.requests.get(type(frame).__name__)(self,frame,connection)
-        except Exception as ex:
-            print ex
+        except Exception:
             raise
 
     def connect_received(self,request_frame,connection):
@@ -91,17 +93,23 @@ class Server(object):
             while True:
                 # accept connections from outside
                 (connection, address) = self.serversocket.accept()
-
-                while True:
-                    try:
-                        data = connection.recv(1024)
-                        if not data:
-                            break
-                        self.receive(data,connection)
-                    except Exception:
-                        connection.close()
+                t = threading.Thread(target=self.run_client_thread,kwargs={'connection': connection, 'address': address})
+                self.connection_pool.append(t)
+                t.start()
+                #t.join()
         finally:
             self.serversocket.close()
+
+    def run_client_thread(self,connection,address):
+        while True:
+            try:
+                data = connection.recv(1024)
+                if not data:
+                    break
+                self.receive(data, connection)
+            except Exception as ex:
+                print ex
+                connection.close()
 
     def disconnect_received(self,request_frame,connection):
         pass

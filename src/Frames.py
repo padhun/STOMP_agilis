@@ -16,9 +16,11 @@ server-command      = "CONNECTED"
                       | "RECEIPT"
                       | "ERROR"
 """
+from util import replace_all
 
 NULL = '\x00'
-
+ESCAPE = {'\n':r"\n",'\r':r"\r",':':r"\c", '\\':"\\\\"}
+UNESCAPE = {r"\n":'\n',r"\r":'\r',r"\c":':', "\\\\":'\\'}
 
 class BaseFrame(object):
     # TODO: Handle optional headers
@@ -45,7 +47,7 @@ class BaseFrame(object):
         ascii_headers = ''
         ascii_msg = ''
         for k, v in self.headers.iteritems():
-            ascii_headers += str(k) + ':' + str(v) + '\n'
+            ascii_headers += replace_all(ESCAPE, str(k)) + ':' + replace_all(ESCAPE, str(v)) + '\n'
         ascii_headers += '\n'
         if self.msg is not None:
             ascii_msg = self.msg

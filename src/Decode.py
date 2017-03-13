@@ -1,5 +1,6 @@
-
 import Frames
+from util import replace_all
+
 
 class Decoder(object):
 
@@ -17,6 +18,6 @@ class Decoder(object):
                                 message.split('\n\n')[0].split('\n')[1:], \
                                 message.split('\n\n')[1]
         frame_class = self.get_frame_class(command)
-        frame_args = dict(item.split(":") for item in headers)
+        frame_args = dict([[replace_all(Frames.UNESCAPE,part) for part in item.split(":")] for item in headers])
         frame = frame_class(msg=msg,**frame_args)
         return frame

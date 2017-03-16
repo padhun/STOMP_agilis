@@ -24,4 +24,6 @@ class Decoder(object):
         frame_class = self.get_frame_class(command)
         frame_args = dict([[replace_all(Frames.UNESCAPE,part) for part in item.split(":")] for item in headers])
         frame = frame_class(msg=msg,**frame_args)
+        if not frame.has_required():
+            raise Exception(command + 'frame REQUIRES headers: ' + ",".join([header for header in frame.required_headers()]))
         return frame

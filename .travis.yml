@@ -3,7 +3,7 @@ notifications:
   email:
     recipients:
        - pnat91@gmail.com
-    on_success: always # default: change
+    on_success: never # default: change
     on_failure: always # default: always
 python:
   - "2.7"

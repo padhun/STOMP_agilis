@@ -3,8 +3,6 @@ from Decode import Decoder
 import Frames
 
 class TestDecoder(unittest.TestCase):
-    """
-    """
     def setUp(self):
         self.decoder = Decoder()
 

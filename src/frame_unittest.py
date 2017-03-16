@@ -13,7 +13,7 @@ class TestUM(unittest.TestCase):
 #        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def test_encoder_get_frame_class_send(self):
-        command = 'SEND'
+        command = 'ACK'
         self.assertEquals(self.encoder.get_frame_class(command),Frames.SEND)
 
     def test_encoder_get_frame_class_subscribe(self):

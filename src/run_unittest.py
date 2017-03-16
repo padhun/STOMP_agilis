@@ -1,10 +1,10 @@
 #!/usr/bin/python
 import os
 import sys
-from unittest import defaultTestLoader as loader, TextTestRunner
+import unittest
 
-suite = loader.discover('./', 'frame_unittest.py')
-runner = TextTestRunner()
-ret = not runner.run(suite).wasSuccessful()
-#sys.exit(ret)
- 
+if __name__ == '__main__':
+    test_suite = unittest.defaultTestLoader.discover('.', 'frame_unittest.py')
+    test_runner = unittest.TextTestRunner(resultclass=unittest.TextTestResult)
+    result = test_runner.run(test_suite)
+    sys.exit(not result.wasSuccessful()) 

@@ -1,10 +1,11 @@
 language: python
+notifications:
+  email:
+    - pnat91@gmail.com
 python:
   - "2.7"
 cache: pip
 script:
   - cd ./src
   - python run_unittest.py
-notifications:
-  email:
-    - pnat91@gmail.com
+

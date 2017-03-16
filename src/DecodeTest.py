@@ -3,6 +3,8 @@ from Decode import Decoder
 import Frames
 
 class TestDecoder(unittest.TestCase):
+    """
+    """
     def setUp(self):
         self.decoder = Decoder()
 
@@ -18,6 +20,12 @@ class TestDecoder(unittest.TestCase):
         testFrame = Frames.CONNECT(**{"accept-version":"1.2", "host":"localhost"})
         msg = "CONNECT\naccept-version:1.2\nhost:localhost\n\n\x00"
         self.assertEquals(self.decoder.decode(msg).__dict__, testFrame.__dict__)
+
+    def test_decoder_decode_send(self):
+        testFrame = Frames.CONNECT(**{"accept-version":"1.2", "host":"localhost", "msg":"hello queue a"})
+        msg = "SEND\naccept-version:1.2\nhost:localhost\n\nhello queue a\x00"
+        self.assertEquals(self.decoder.decode(msg).__dict__, testFrame.__dict__)
+
 
 if __name__ == '__main__':
     unittest.main()

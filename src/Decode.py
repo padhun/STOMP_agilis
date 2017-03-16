@@ -14,9 +14,13 @@ class Decoder(object):
         return frame_class
 
     def decode(self,message):
+        """
+        :param message:
+        :return:
+        """
         command, headers, msg = message.split('\n')[0], \
                                 message.split('\n\n')[0].split('\n')[1:], \
-                                None if message.split('\n\n')[1] == '\x00' else message.split('\n\n')[1]
+                                None if message.split('\n\n')[1] == '\x00' else message.split('\n\n')[1][:-1]
         frame_class = self.get_frame_class(command)
         frame_args = dict([[replace_all(Frames.UNESCAPE,part) for part in item.split(":")] for item in headers])
         frame = frame_class(msg=msg,**frame_args)

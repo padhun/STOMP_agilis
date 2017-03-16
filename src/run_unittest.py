@@ -1,9 +1,10 @@
 #!/usr/bin/python
 import os
+import sys
+from unittest import defaultTestLoader as loader, TextTestRunner
 
-print "Frame unittest execution started!"
-os.system('python frame_unittest.py')
-print "Frame unittest execution finished!"
-print "Decode unittest execution started!"
-os.system('python DecodeTest.py')
-print "Decode unittest execution finished!"
+suite = loader.discover('./', 'frame_unittest.py')
+runner = TextTestRunner()
+ret = not runner.run(suite).wasSuccessful()
+#sys.exit(ret)
+ 

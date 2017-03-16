@@ -16,5 +16,9 @@ class TestUM(unittest.TestCase):
         command = 'SEND'
         self.assertEquals(self.encoder.get_frame_class(command),Frames.SEND)
 
+    def test_encoder_invalid_frame_class(self):
+        command = '---'
+        self.assertRaises(Exception, self.encoder.get_frame_class, command)
+
 if __name__ == '__main__':
     unittest.main()

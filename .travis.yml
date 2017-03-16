@@ -5,3 +5,6 @@ cache: pip
 script:
   - cd ./src
   - python run_unittest.py
+notifications:
+  email:
+    - pnat91@gmail.com

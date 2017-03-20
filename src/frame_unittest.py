@@ -3,9 +3,6 @@ from Encode import Encoder
 import Frames
 import socket
 
-
-
-
 class TestUM(unittest.TestCase):
 
     def setUp(self):

@@ -1,6 +1,6 @@
 import unittest
-from Encode import Encoder
-import Frames
+import Encoder
+from Utils import Frames
 
 class TestEncoder(unittest.TestCase):
     def setUp(self):
@@ -53,7 +53,6 @@ class TestEncoder(unittest.TestCase):
         kwargs = {'':'','':''}
         testmsg = 'UNSUBSCRIBE'
         self.assertRaises(Exception,self.encoder.encode,testmsg, **kwargs)
-
 
 if __name__ == '__main__':
     unittest.main()

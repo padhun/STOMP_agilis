@@ -1,6 +1,6 @@
 import unittest
-from Decode import Decoder
-import Frames
+import Decoder
+from Utils import Frames
 
 class TestDecoder(unittest.TestCase):
     def setUp(self):

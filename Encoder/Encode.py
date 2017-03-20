@@ -1,4 +1,4 @@
-import Frames
+from Utils import Frames
 
 
 class Encoder(object):

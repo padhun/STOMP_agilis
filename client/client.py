@@ -1,7 +1,7 @@
 
-from Encode import Encoder
-from Decode import Decoder
-import Frames
+import Encoder
+import Decoder
+from Utils import Frames
 import socket
 import threading
 

@@ -1,7 +1,7 @@
 import unittest
-from Encode import Encoder
-import Frames
-import socket
+import Encoder
+from utils import Frames
+
 
 class TestUM(unittest.TestCase):
 

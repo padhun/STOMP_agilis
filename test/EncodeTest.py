@@ -1,10 +1,10 @@
 import unittest
-import Encoder
+from Encoder import Encode
 from Utils import Frames
 
 class TestEncoder(unittest.TestCase):
     def setUp(self):
-        self.encoder = Encoder();
+        self.encoder = Encode.Encoder();
         pass
 
     def test_encoder_get_frame_class(self):

@@ -1,10 +1,10 @@
 import unittest
-import Decoder
+from Decoder import Decode
 from Utils import Frames
 
 class TestDecoder(unittest.TestCase):
     def setUp(self):
-        self.decoder = Decoder()
+        self.decoder = Decode.Decoder()
 
     def test_decoder_get_frame_class(self):
         command = 'SEND'

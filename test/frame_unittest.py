@@ -1,12 +1,12 @@
 import unittest
-import Encoder
-from utils import Frames
+from Encoder import Encode
+from Utils import Frames
 
 
 class TestUM(unittest.TestCase):
 
     def setUp(self):
-        self.encoder = Encoder()
+        self.encoder = Encode.Encoder()
 #        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def test_encoder_get_frame_class_send(self):

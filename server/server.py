@@ -1,8 +1,8 @@
 import socket
 import threading
 
-import Decoder
-import Encoder
+from Decoder import Decode
+from Encoder import Encode
 
 
 class Server(object):
@@ -19,8 +19,8 @@ class Server(object):
         supported_versions: tells which STOMP version supported by the server.
         serversocket: TCP socket for the communication
         """
-        self.decoder = Decoder()
-        self.encoder = Encoder()
+        self.decoder = Decode.Decoder()
+        self.encoder = Encode.Encoder()
         self.supported_versions = ['1.2']
         # create an INET, STREAMing socket
         self.serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

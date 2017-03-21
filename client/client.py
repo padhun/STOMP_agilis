@@ -1,6 +1,6 @@
 
-import Encoder
-import Decoder
+from Encoder import Encode
+from Decoder import Decode
 from Utils import Frames
 import socket
 import threading
@@ -11,8 +11,8 @@ class Client(object):
     """
 
     def __init__(self):
-        self.encoder = Encoder()
-        self.decoder = Decoder()
+        self.encoder = Encode.Encoder()
+        self.decoder = Decode.Decoder()
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def connect(self,port,**kwargs):

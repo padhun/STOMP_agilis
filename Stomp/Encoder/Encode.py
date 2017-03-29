@@ -1,4 +1,4 @@
-from Utils import Frames
+from Stomp.Utils import Frames
 
 
 class Encoder(object):

@@ -1,9 +1,11 @@
-
-from Encoder import Encode
-from Decoder import Decode
-from Utils import Frames
 import socket
 import threading
+
+from Stomp.Decoder import Decode
+from Stomp.Utils import Frames
+
+from Stomp.Encoder import Encode
+
 
 class Client(object):
     """

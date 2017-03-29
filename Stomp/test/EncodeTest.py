@@ -1,6 +1,9 @@
 import unittest
-from Encoder import Encode
-from Utils import Frames
+
+from Stomp.Utils import Frames
+
+from Stomp.Encoder import Encode
+
 
 class TestEncoder(unittest.TestCase):
     def setUp(self):

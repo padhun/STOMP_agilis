@@ -1,4 +1,5 @@
-import Utils
+from Stomp import Utils
+
 
 class Decoder(object):
 

@@ -9,5 +9,5 @@ python:
   - "2.7"
 cache: pip
 script:
-  - python ./test/run_unittest.py
+  - python -m Stomp.test.run_unittest
 

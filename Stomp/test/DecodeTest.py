@@ -1,6 +1,9 @@
 import unittest
-from Decoder import Decode
-from Utils import Frames
+
+from Stomp.Utils import Frames
+
+from Stomp.Decoder import Decode
+
 
 class TestDecoder(unittest.TestCase):
     def setUp(self):
@@ -15,7 +18,7 @@ class TestDecoder(unittest.TestCase):
         self.assertRaises(Exception, self.decoder.get_frame_class, command)
 
     def test_decoder_decode_connect(self):
-        testFrame = Frames.CONNECT(**{"accept-version":"1.2", "host":"localhost"})
+        testFrame = Frames.CONNECT(**{"accept-version": "1.2", "host": "localhost"})
         msg = "CONNECT\naccept-version:1.2\nhost:localhost\n\n\x00"
         self.assertEquals(self.decoder.decode(msg).__dict__, testFrame.__dict__)
 
@@ -24,7 +27,7 @@ class TestDecoder(unittest.TestCase):
         self.assertRaises(Exception, self.decoder.decode, msg)
 
     def test_decoder_decode_send(self):
-        testFrame = Frames.SEND(**{"destination":"/queue/a", "msg":"hello queue a"})
+        testFrame = Frames.SEND(**{"destination": "/queue/a", "msg": "hello queue a"})
         msg = "SEND\ndestination:/queue/a\n\nhello queue a\x00"
         self.assertEquals(self.decoder.decode(msg).__dict__, testFrame.__dict__)
 
@@ -33,7 +36,7 @@ class TestDecoder(unittest.TestCase):
         self.assertRaises(Exception, self.decoder.decode, msg)
 
     def test_decoder_decode_subscribe(self):
-        testFrame = Frames.SUBSCRIBE(**{"id":"0", "destination": "/queue/foo"})
+        testFrame = Frames.SUBSCRIBE(**{"id": "0", "destination": "/queue/foo"})
         msg = "SUBSCRIBE\nid:0\ndestination:/queue/foo\n\n\x00"
         self.assertEquals(self.decoder.decode(msg).__dict__, testFrame.__dict__)
 
@@ -42,7 +45,7 @@ class TestDecoder(unittest.TestCase):
         self.assertRaises(Exception, self.decoder.decode, msg)
 
     def test_decoder_decode_unsubscribe(self):
-        testFrame = Frames.UNSUBSCRIBE(**{"id":"0"})
+        testFrame = Frames.UNSUBSCRIBE(**{"id": "0"})
         msg = "UNSUBSCRIBE\nid:0\n\n\x00"
         self.assertEquals(self.decoder.decode(msg).__dict__, testFrame.__dict__)
 

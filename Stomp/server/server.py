@@ -1,8 +1,8 @@
 import socket
 import threading
 
-from Decoder import Decode
-from Encoder import Encode
+from Stomp.Decoder import Decode
+from Stomp.Encoder import Encode
 
 
 class Server(object):

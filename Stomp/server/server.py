@@ -56,7 +56,7 @@ class Server(object):
             error_message = 'Supported protocol versions are ' + str(self.supported_versions)
             error_frame = self.encoder.encode('ERROR',**{'msg' : error_message})
             self.respond(str(error_frame),connection)
-            raise Exception("The client and server do not share any common protocol versions")
+            raise RuntimeError("The client and server do not share any common protocol versions")
         else:
             connected_frame = self.encoder.encode('CONNECTED',**{'version' : max(common_versions)})
             self.respond(str(connected_frame),connection)
@@ -148,7 +148,7 @@ class Server(object):
             error_message = 'Given SUBSCRIBE id: ' + request_frame.headers['id'] + ' already registered'
             error_frame = self.encoder.encode('ERROR', **{'msg': error_message})
             self.respond(str(error_frame), connection)
-            raise Exception("Given SUBSCRIBE id already registered!")
+            raise RuntimeError("Given SUBSCRIBE id already registered!")
         else:
             subscription = {'id': int(request_frame.headers['id']), 'destination': request_frame.headers['destination'],
                             'connection': connection}
@@ -167,7 +167,7 @@ class Server(object):
             error_message = 'Given SUBSCRIBE id: ' + request_frame.headers['id'] + ' is NOT registered'
             error_frame = self.encoder.encode('ERROR', **{'msg': error_message})
             self.respond(str(error_frame), connection)
-            raise Exception("Given SUBSCRIBE id is NOT registered!")
+            raise RuntimeError("Given SUBSCRIBE id is NOT registered!")
         else:
             for sub in self.subscriptions:
                 if sub['id'] == request_frame.headers['id']:
@@ -175,7 +175,7 @@ class Server(object):
                         error_message = 'Given SUBSCRIBE id: ' + request_frame.headers['id'] + ' is NOT blongs to you'
                         error_frame = self.encoder.encode('ERROR', **{'msg': error_message})
                         self.respond(str(error_frame), connection)
-                        raise Exception("Given SUBSCRIBE id is NOT belongs to client!")
+                        raise RuntimeError("Given SUBSCRIBE id is NOT belongs to client!")
                     else:
                         self.subscriptions.remove(sub)
 

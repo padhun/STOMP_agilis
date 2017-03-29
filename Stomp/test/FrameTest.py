@@ -74,7 +74,7 @@ class TestUM(unittest.TestCase):
 
     def test_encoder_invalid_frame_class(self):
         command = '---'
-        self.assertRaises(Exception, self.encoder.get_frame_class, command)
+        self.assertRaises(RuntimeError, self.encoder.get_frame_class, command)
 
 if __name__ == '__main__':
     unittest.main()

@@ -16,7 +16,7 @@ class TestEncoder(unittest.TestCase):
 
     def test_encoder_invalid_class(self):
         command = 'asd'
-        self.assertRaises(Exception,self.encoder.get_frame_class,command)
+        self.assertRaises(RuntimeError,self.encoder.get_frame_class,command)
 
     def test_encode_connect(self):
         kwargs = {'port':1212,'accept-version':'1.2,10.1','host':'localhost'}
@@ -33,7 +33,7 @@ class TestEncoder(unittest.TestCase):
     def test_encode_send_missing_header(self):
         kwargs = {'dst': 'asd'}
         testmsg = 'SEND'
-        self.assertRaises(Exception,self.encoder.encode,testmsg,**kwargs)
+        self.assertRaises(RuntimeError,self.encoder.encode,testmsg,**kwargs)
 
     def test_encode_subscribe(self):
         kwargs = {'destination':'asd','id':'123'}
@@ -44,7 +44,7 @@ class TestEncoder(unittest.TestCase):
     def test_encode_subscribe_missing_header(self):
         kwargs = {'':'','':''}
         testmsg = 'SUBSCRIBE'
-        self.assertRaises(Exception,self.encoder.encode,testmsg, **kwargs)
+        self.assertRaises(RuntimeError,self.encoder.encode,testmsg, **kwargs)
 
     def test_encode_unsubscribe(self):
         kwargs = {'id': '123'}
@@ -55,7 +55,7 @@ class TestEncoder(unittest.TestCase):
     def test_encode_unsubscribe_missing_header(self):
         kwargs = {'':'','':''}
         testmsg = 'UNSUBSCRIBE'
-        self.assertRaises(Exception,self.encoder.encode,testmsg, **kwargs)
+        self.assertRaises(RuntimeError,self.encoder.encode,testmsg, **kwargs)
 
 if __name__ == '__main__':
     unittest.main()

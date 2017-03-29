@@ -22,13 +22,12 @@ NULL = '\x00'
 ESCAPE = {'\n':r"\n",'\r':r"\r",':':r"\c", '\\':"\\\\"}
 UNESCAPE = {r"\n":'\n',r"\r":'\r',r"\c":':', "\\\\":'\\'}
 
-
 class BaseFrame(object):
     # TODO: Handle optional headers
-    headers = {}
-    required_headers = ()
+    headers={}
+    required_headers=()
 
-    def __init__(self, **kwargs):
+    def __init__(self,**kwargs):
         self.msg = None
         self.headers = {}
         if kwargs.has_key('msg'):
@@ -55,29 +54,24 @@ class BaseFrame(object):
         ascii_frame = ascii_command + ascii_headers + ascii_msg + (NULL if NULL not in ascii_msg else '')
         return ascii_frame
 
-
 class CONNECT(BaseFrame):
     """
     headers:
         REQUIRED: accept-version, host
         OPTIONAL: login, passcode, heart-beat
     """
-    required_headers = ("accept-version","host",)
+    required_headers=("accept-version","host",)
 
     def __init__(self, **kwargs):
         BaseFrame.__init__(self, **kwargs)
 
 
-class STOMP(BaseFrame):
+class STOMP(CONNECT):
     """
     headers:
         REQUIRED: accept-version, host
         OPTIONAL: login, passcode, heart-beat
     """
-    required_headers = ("accept-version", "host",)
-
-    def __init__(self, **kwargs):
-        BaseFrame.__init__(self, **kwargs)
 
 
 class CONNECTED(BaseFrame):
@@ -86,7 +80,7 @@ class CONNECTED(BaseFrame):
         REQUIRED: version
         OPTIONAL: session, server, heart-beat
     """
-    required_headers = ("version",)
+    required_headers=("version",)
 
     def __init__(self, **kwargs):
         BaseFrame.__init__(self, **kwargs)
@@ -98,7 +92,7 @@ class SEND(BaseFrame):
         REQUIRED: destination
         OPTIONAL: transaction
     """
-    required_headers = ("destination",)
+    required_headers=("destination",)
 
     def __init__(self, **kwargs):
         BaseFrame.__init__(self, **kwargs)
@@ -110,7 +104,7 @@ class SUBSCRIBE(BaseFrame):
         REQUIRED: destination, id
         OPTIONAL: ack
     """
-    required_headers = ("destination", "id",)
+    required_headers=("destination", "id",)
 
     def __init__(self, **kwargs):
         BaseFrame.__init__(self, **kwargs)
@@ -122,7 +116,7 @@ class UNSUBSCRIBE(BaseFrame):
         REQUIRED: id
         OPTIONAL: none
     """
-    required_headers = ("id",)
+    required_headers=("id",)
 
     def __init__(self, **kwargs):
         BaseFrame.__init__(self, **kwargs)
@@ -134,7 +128,7 @@ class ACK(BaseFrame):
         REQUIRED: id
         OPTIONAL: transaction
     """
-    required_headers = ("id",)
+    required_headers=("id",)
 
     def __init__(self, **kwargs):
         BaseFrame.__init__(self, **kwargs)
@@ -146,7 +140,7 @@ class NACK(BaseFrame):
         REQUIRED: id
         OPTIONAL: transaction
     """
-    required_headers = ("id",)
+    required_headers=("id",)
 
     def __init__(self, **kwargs):
         BaseFrame.__init__(self, **kwargs)
@@ -158,7 +152,7 @@ class BEGIN(BaseFrame):
         REQUIRED: transaction
         OPTIONAL: none
     """
-    required_headers = ("transaction",)
+    required_headers=("transaction",)
 
     def __init__(self, **kwargs):
         BaseFrame.__init__(self, **kwargs)
@@ -170,7 +164,7 @@ class COMMIT(BaseFrame):
         REQUIRED: transaction
         OPTIONAL: none
     """
-    required_headers = ("transaction",)
+    required_headers=("transaction",)
 
     def __init__(self, **kwargs):
         BaseFrame.__init__(self, **kwargs)
@@ -182,7 +176,7 @@ class ABORT(BaseFrame):
         REQUIRED: transaction
         OPTIONAL: none
     """
-    required_headers = ("transaction",)
+    required_headers=("transaction",)
 
     def __init__(self, **kwargs):
         BaseFrame.__init__(self, **kwargs)
@@ -205,7 +199,7 @@ class MESSAGE(BaseFrame):
         REQUIRED: destination, message-id, subscription
         OPTIONAL: ack
     """
-    required_headers = ("destination", "message-id", "subscription",)
+    required_headers=("destination", "message-id", "subscription",)
 
     def __init__(self, **kwargs):
         BaseFrame.__init__(self, **kwargs)
@@ -217,7 +211,7 @@ class RECEIPT(BaseFrame):
         REQUIRED: receipt-id
         OPTIONAL: none
     """
-    required_headers = ("receipt-id",)
+    required_headers=("receipt-id",)
 
     def __init__(self, **kwargs):
         BaseFrame.__init__(self, **kwargs)
@@ -231,22 +225,23 @@ class ERROR(BaseFrame):
     """
 
     def __init__(self, **kwargs):
-        BaseFrame.__init__(self, **kwargs)
+        BaseFrame.__init__(self,**kwargs)
 
-FRAMES = {
-    "CONNECT": CONNECT,
-    "STOMP": STOMP,
-    "CONNECTED": CONNECTED,
-    "SEND": SEND,
-    "SUBSCRIBE": SUBSCRIBE,
-    "UNSUBSCRIBE": UNSUBSCRIBE,
-    "ACK": ACK,
-    "NACK": NACK,
-    "BEGIN": BEGIN,
-    "COMMIT": COMMIT,
-    "ABORT": ABORT,
-    "DISCONNECT": DISCONNECT,
-    "MESSAGE": MESSAGE,
-    "RECEIPT": RECEIPT,
-    "ERROR": ERROR
+FRAMES={
+    "CONNECT":CONNECT,
+    "STOMP":STOMP,
+    "CONNECTED":CONNECTED,
+    "SEND":SEND,
+    "SUBSCRIBE":SUBSCRIBE,
+    "UNSUBSCRIBE":UNSUBSCRIBE,
+    "ACK":ACK,
+    "NACK":NACK,
+    "BEGIN":BEGIN,
+    "COMMIT":COMMIT,
+    "ABORT":ABORT,
+    "DISCONNECT":DISCONNECT,
+    "MESSAGE":MESSAGE,
+    "RECEIPT":RECEIPT,
+    "ERROR":ERROR
 }
+

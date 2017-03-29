@@ -46,7 +46,7 @@ class Server(object):
         except Exception:
             raise
 
-    def connect_frame_received(self,request_frame,connection):
+    def connect_frame_received(self, request_frame, connection):
         """
         This method called when the server get CONNECT frame.
         If the client and server do not share any common protocol versions, raise an exception
@@ -58,7 +58,7 @@ class Server(object):
         common_versions = list(set(request_frame.headers['accept-version'].split(',')).intersection(self.supported_versions))
         if len(common_versions) == 0:
             error_message = 'Supported protocol versions are ' + str(self.supported_versions)
-            self.error(request_frame, error_message, connection)
+            self.error(error_message, connection)
         else:
             connected_frame = self.encoder.encode('CONNECTED', **{'version': max(common_versions)})
             self.respond(str(connected_frame), connection)
@@ -121,7 +121,33 @@ class Server(object):
                 raise
 
     def disconnect_frame_received(self, request_frame, connection):
-        pass
+        """
+        A graceful shutdown, where if the client is assured that all previous frames have been received by the server,
+        then DISCONNECT frame contains receipt header. In that case server has to reply with RECEIPT frame,
+        with the given id.
+        If client has active subscription, remove it.
+        :param request_frame: received DISCONNECT frame
+        :param connection: TCP connection variable with the client
+        :return:
+        """
+        if 'receipt' in request_frame.headers:
+            self.receipt(request_frame.headers['receipt'], connection)
+        else:
+            connection.close()
+        for sub in self.subscriptions:
+            if sub['connection'] == connection:
+                self.subscriptions.remove(sub)
+
+    def receipt(self, receipt_id, connection):
+        """
+        A RECEIPT frame is sent from the server to the client once a server has successfully processed a client frame
+        that requests a receipt. A RECEIPT frame MUST include the header receipt-id.
+        :param receipt_id:  the value is the value of the receipt header in the frame which this is a receipt for
+        :param connection: TCP connection variable
+        :return:
+        """
+        receipt_frame = self.encoder.encode('RECEIPT', **{'receipt-id': str(receipt_id)})
+        self.respond(str(receipt_frame), connection)
 
     def send_frame_received(self, request_frame, connection):
         """
@@ -138,7 +164,7 @@ class Server(object):
                                                               'msg': request_frame.msg})
                 self.respond(str(msg_frame), sub['connection'])
 
-    def subscribe_frame_received(self,request_frame,connection):
+    def subscribe_frame_received(self, request_frame, connection):
         """
         Check if there is a subscription with the same id. If yes send an error message.
         Else make the subscription, and append to the subscription list.
@@ -177,7 +203,7 @@ class Server(object):
 
     def error(self, error_msg, connection):
         """
-        Crete ERROR Frame if something went wrong. Raise excepion with error message.
+        Crete ERROR Frame if something went wrong. Raise exception with error message.
         :param error_msg: Error message. What went wrong.
         :param connection: TCP connection variable
         :return:

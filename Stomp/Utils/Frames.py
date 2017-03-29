@@ -66,16 +66,12 @@ class CONNECT(BaseFrame):
         BaseFrame.__init__(self, **kwargs)
 
 
-class STOMP(BaseFrame):
+class STOMP(CONNECT):
     """
     headers:
         REQUIRED: accept-version, host
         OPTIONAL: login, passcode, heart-beat
     """
-    required_headers=("accept-version","host",)
-
-    def __init__(self, **kwargs):
-        BaseFrame.__init__(self, **kwargs)
 
 
 class CONNECTED(BaseFrame):

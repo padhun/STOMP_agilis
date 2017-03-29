@@ -18,6 +18,10 @@ class Server(object):
         encoder: Encoder class object. Supports making STOMP frames from commands.
         supported_versions: tells which STOMP version supported by the server.
         serversocket: TCP socket for the communication
+        server-command      = "CONNECTED"
+                            | "MESSAGE"
+                            | "RECEIPT"
+                            | "ERROR"
         """
         self.decoder = Decode.Decoder()
         self.encoder = Encode.Encoder()
@@ -27,7 +31,7 @@ class Server(object):
         self.connection_pool = []
         self.subscriptions = []
 
-    def receive(self,msg,connection):
+    def receive(self, msg, connection):
         """
         This method called when the server get a message from a client.
         First it decodes the msg to a frame. After that call a function depends on the frame's command.
@@ -38,7 +42,7 @@ class Server(object):
         try:
             frame = self.decoder.decode(msg)
             print 'Server received frame: \n' + str(frame) + '\n'
-            self.requests.get(type(frame).__name__)(self,frame,connection)
+            self.requests.get(type(frame).__name__)(self, frame, connection)
         except Exception:
             raise
 
@@ -54,14 +58,12 @@ class Server(object):
         common_versions = list(set(request_frame.headers['accept-version'].split(',')).intersection(self.supported_versions))
         if len(common_versions) == 0:
             error_message = 'Supported protocol versions are ' + str(self.supported_versions)
-            error_frame = self.encoder.encode('ERROR',**{'msg' : error_message})
-            self.respond(str(error_frame),connection)
-            raise RuntimeError("The client and server do not share any common protocol versions")
+            self.error(request_frame, error_message, connection)
         else:
-            connected_frame = self.encoder.encode('CONNECTED',**{'version' : max(common_versions)})
-            self.respond(str(connected_frame),connection)
+            connected_frame = self.encoder.encode('CONNECTED', **{'version': max(common_versions)})
+            self.respond(str(connected_frame), connection)
 
-    def respond(self,msg,connection):
+    def respond(self, msg, connection):
         """
         This method called when the client sends frame, which need some respond.
         :param msg: STOMP frame as a string
@@ -76,7 +78,7 @@ class Server(object):
                 raise RuntimeError("socket connection broken")
             totalsent = totalsent + sent
 
-    def start(self,address,port):
+    def start(self, address, port):
         """
         This function starts the listening on the given address and port.
         Creates a new thread after every TCP connection
@@ -101,7 +103,7 @@ class Server(object):
         finally:
             self.serversocket.close()
 
-    def run_client_thread(self,connection,address):
+    def run_client_thread(self, connection, address):
         """
         This method is waiting for messages from client.
         :param connection: TCP connection variable
@@ -118,10 +120,10 @@ class Server(object):
                 connection.close()
                 raise
 
-    def disconnect_frame_received(self,request_frame,connection):
+    def disconnect_frame_received(self, request_frame, connection):
         pass
 
-    def send_frame_received(self,request_frame,connection):
+    def send_frame_received(self, request_frame, connection):
         """
         When STOMP server receive SEND frame, this method forwards the frame to the right clients.
         Check who is subscribed on the destination. Not allowed, to resend the message to the owner client.
@@ -146,15 +148,13 @@ class Server(object):
         """
         if any(int(request_frame.headers['id']) == s['id'] for s in self.subscriptions):
             error_message = 'Given SUBSCRIBE id: ' + request_frame.headers['id'] + ' already registered'
-            error_frame = self.encoder.encode('ERROR', **{'msg': error_message})
-            self.respond(str(error_frame), connection)
-            raise RuntimeError("Given SUBSCRIBE id already registered!")
+            self.error(error_message, connection)
         else:
             subscription = {'id': int(request_frame.headers['id']), 'destination': request_frame.headers['destination'],
                             'connection': connection}
             self.subscriptions.append(subscription)
 
-    def unsubscribe_frame_received(self,request_frame,connection):
+    def unsubscribe_frame_received(self, request_frame, connection):
         """
         If no subscription with the received id, send error message.
         If the subscription is in the list, but its not belongs to this client, send error message.
@@ -165,19 +165,26 @@ class Server(object):
         """
         if not any(int(request_frame.headers['id']) == s['id'] for s in self.subscriptions):
             error_message = 'Given SUBSCRIBE id: ' + request_frame.headers['id'] + ' is NOT registered'
-            error_frame = self.encoder.encode('ERROR', **{'msg': error_message})
-            self.respond(str(error_frame), connection)
-            raise RuntimeError("Given SUBSCRIBE id is NOT registered!")
+            self.error(error_message, connection)
         else:
             for sub in self.subscriptions:
                 if sub['id'] == request_frame.headers['id']:
                     if sub['connection'] != connection:
                         error_message = 'Given SUBSCRIBE id: ' + request_frame.headers['id'] + ' is NOT blongs to you'
-                        error_frame = self.encoder.encode('ERROR', **{'msg': error_message})
-                        self.respond(str(error_frame), connection)
-                        raise RuntimeError("Given SUBSCRIBE id is NOT belongs to client!")
+                        self.error(error_message, connection)
                     else:
                         self.subscriptions.remove(sub)
+
+    def error(self, error_msg, connection):
+        """
+        Crete ERROR Frame if something went wrong. Raise excepion with error message.
+        :param error_msg: Error message. What went wrong.
+        :param connection: TCP connection variable
+        :return:
+        """
+        error_frame = self.encoder.encode('ERROR', **{'msg': error_msg})
+        self.respond(str(error_frame), connection)
+        raise RuntimeError(error_msg)
 
     requests = {
         'CONNECT': connect_frame_received,
@@ -196,4 +203,4 @@ class Server(object):
 
 if __name__ == '__main__':
     stomp_server = Server()
-    stomp_server.start('localhost',1212)
+    stomp_server.start('localhost', 1212)

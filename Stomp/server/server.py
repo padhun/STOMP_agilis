@@ -188,6 +188,7 @@ class Server(object):
 
     requests = {
         'CONNECT': connect_frame_received,
+        'STOMP': connect_frame_received,
         'DISCONNECT': disconnect_frame_received,
         'SEND': send_frame_received,
         'SUBSCRIBE': subscribe_frame_received,
@@ -197,7 +198,6 @@ class Server(object):
         #'ABORT': abort_received,
         #'COMMIT': commit_received,
         #'BEGIN': begin_received,
-        #'STOMP': stomp_received,
     }
 
 

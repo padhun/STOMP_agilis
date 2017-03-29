@@ -172,7 +172,8 @@ class Server(object):
         :param connection: TCP connection variable
         :return:
         """
-        if any(int(request_frame.headers['id']) == s['id'] for s in self.subscriptions):
+        if any(int(request_frame.headers['id']) == s['id']
+               and request_frame.headers['destination'] == s['destination'] for s in self.subscriptions):
             error_message = 'Given SUBSCRIBE id: ' + request_frame.headers['id'] + ' already registered'
             self.error(error_message, connection)
         else:

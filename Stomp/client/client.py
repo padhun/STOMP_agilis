@@ -11,6 +11,7 @@ from Stomp.Encoder import Encode
 
 class Client(object):
     """
+
     """
 
     def __init__(self):

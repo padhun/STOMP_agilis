@@ -30,6 +30,8 @@ class Server(object):
         self.serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connection_pool = []
         self.subscriptions = []
+        self.transactions = []
+        self.messages = []
 
     def receive(self, msg, connection):
         """
@@ -157,12 +159,24 @@ class Server(object):
         :param connection: TCP connection variable, where the message came from
         :return:
         """
+        message_id = 0  # TODO generate random unique message ID
         for sub in self.subscriptions:
             if sub['destination'] == request_frame.headers['destination'] and sub['connection'] != connection:
                 msg_frame = self.encoder.encode('MESSAGE', **{'destination': request_frame.headers['destination'],
-                                                              'message-id': '0', 'subscription': sub['id'],
+                                                              'message-id': message_id, 'subscription': sub['id'],
                                                               'msg': request_frame.msg})
+                if 'transaction' in request_frame.headers:
+                    msg_frame.headers['transaction'] = request_frame.headers['transaction']
+
+                if any(connection == m['client'] for m in self.messages):
+                    for m in self.messages:
+                        if m['client'] == connection:
+                            m['messages'].append(message_id)
+                else:
+                    self.messages.append({'ids': [message_id], 'client': connection})
+
                 self.respond(str(msg_frame), sub['connection'])
+        self.receipt('message-'+str(message_id), connection)
 
     def subscribe_frame_received(self, request_frame, connection):
         """
@@ -172,13 +186,15 @@ class Server(object):
         :param connection: TCP connection variable
         :return:
         """
-        if any(int(request_frame.headers['id']) == s['id']
-               and request_frame.headers['destination'] == s['destination'] for s in self.subscriptions):
+        if any(int(request_frame.headers['id']) == s['id'] and
+                request_frame.headers['destination'] == s['destination'] for s in self.subscriptions):
             error_message = 'Given SUBSCRIBE id: ' + request_frame.headers['id'] + ' already registered'
             self.error(error_message, connection)
         else:
             subscription = {'id': int(request_frame.headers['id']), 'destination': request_frame.headers['destination'],
-                            'connection': connection}
+                            'connection': connection, 'ack': 'auto'}
+            if 'ack' in request_frame.headers:
+                subscription['ack'] = request_frame.headers['ack']
             self.subscriptions.append(subscription)
 
     def unsubscribe_frame_received(self, request_frame, connection):
@@ -211,7 +227,48 @@ class Server(object):
         """
         error_frame = self.encoder.encode('ERROR', **{'msg': error_msg})
         self.respond(str(error_frame), connection)
-        raise RuntimeError(error_msg)
+        # raise RuntimeError(error_msg)
+
+    def begin_received(self, request_frame, connection):
+        """
+        BEGIN frame received. Store the transaction informations if there is no other transaction
+        with the same id from the same client.
+        :param request_frame: Received BEGIN frame
+        :param connection: TCP connection variable
+        :return:
+        """
+        if any(int(request_frame.headers['transaction']) == t['transaction'] and
+               connection == t['beginner'] for t in self.transactions):
+            error_message = 'Given Transaction id: ' + request_frame.headers['transaction'] + ' is already registered'
+            self.error(error_message, connection)
+        else:
+            self.transactions.append({'id': request_frame.headers['transaction'], 'beginner': connection})
+
+    def ack_nack_received(self, request_frame):
+        """
+        If ACK or NACK frame contains transaction header, forward the frame to the client who started the transaction
+        Else ACK or NACK the message, sender client comes from messages list
+        :param request_frame: Received ACK or NACK frame
+        :return:
+        """
+        if 'transaction' in request_frame.headers:
+            for transaction in self.transactions:
+                if transaction['id'] == request_frame.headers['transaction']:
+                    self.respond(str(request_frame), transaction['beginner'])
+        else:
+            for m in self.messages:
+                if any(request_frame.headers['id'] == i for i in m['ids']):
+                    self.respond(str(request_frame),m['client'])
+
+    def commit_abort_received(self, request_frame, connection):
+        """
+
+        :param request_frame:
+        :param connection:
+        :return:
+        """
+        pass
+
 
     requests = {
         'CONNECT': connect_frame_received,
@@ -219,12 +276,12 @@ class Server(object):
         'DISCONNECT': disconnect_frame_received,
         'SEND': send_frame_received,
         'SUBSCRIBE': subscribe_frame_received,
-        'UNSUBSCRIBE': unsubscribe_frame_received
-        #'ACK': ack_received,
-        #'NACK': nack_received,
-        #'ABORT': abort_received,
-        #'COMMIT': commit_received,
-        #'BEGIN': begin_received,
+        'UNSUBSCRIBE': unsubscribe_frame_received,
+        'ACK': ack_nack_received,
+        'NACK': ack_nack_received,
+        'ABORT': commit_abort_received,
+        'COMMIT': commit_abort_received,
+        'BEGIN': begin_received,
     }
 
 

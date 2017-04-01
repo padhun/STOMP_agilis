@@ -10,7 +10,6 @@ class Server(object):
     Server class for STOMP server functionality.
     Listen on a given socket and respond to STOMP clients depends on the input message.
     """
-
     def __init__(self):
         """
         Server class initialization.
@@ -61,6 +60,7 @@ class Server(object):
         if len(common_versions) == 0:
             error_message = 'Supported protocol versions are ' + str(self.supported_versions)
             self.error(error_message, connection)
+            raise RuntimeError(error_message)
         else:
             connected_frame = self.encoder.encode('CONNECTED', **{'version': max(common_versions)})
             self.respond(str(connected_frame), connection)

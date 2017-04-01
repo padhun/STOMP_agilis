@@ -1,5 +1,6 @@
 import socket
 import threading
+import uuid
 
 from Stomp.Decoder import Decode
 from Stomp.Encoder import Encode
@@ -159,7 +160,7 @@ class Server(object):
         :param connection: TCP connection variable, where the message came from
         :return:
         """
-        message_id = 0  # TODO generate random unique message ID
+        message_id = str(uuid.uuid4())  # TODO generate namespace dependent unique message ID if it is requiered somewhere
         if 'transaction' in request_frame.headers:
             for t in self.transactions:
                 if t['id'] == request_frame.headers['transaction'] and connection == t['beginner']:

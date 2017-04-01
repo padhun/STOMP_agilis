@@ -30,7 +30,6 @@ class Server(object):
         self.connection_pool = []
         self.subscriptions = []
         self.transactions = []
-        self.messages = []
 
     def receive(self, msg, connection):
         """
@@ -98,7 +97,8 @@ class Server(object):
             while True:
                 # accept connections from outside
                 (connection, client_address) = self.serversocket.accept()
-                t = threading.Thread(target=self.run_client_thread,kwargs={'connection': connection, 'address': client_address})
+                t = threading.Thread(target=self.run_client_thread,kwargs={'connection': connection,
+                                                                           'address': client_address})
                 self.connection_pool.append(t)
                 t.start()
                 #t.join()
@@ -160,22 +160,18 @@ class Server(object):
         :return:
         """
         message_id = 0  # TODO generate random unique message ID
-        for sub in self.subscriptions:
-            if sub['destination'] == request_frame.headers['destination'] and sub['connection'] != connection:
-                msg_frame = self.encoder.encode('MESSAGE', **{'destination': request_frame.headers['destination'],
-                                                              'message-id': message_id, 'subscription': sub['id'],
-                                                              'msg': request_frame.msg})
-                if 'transaction' in request_frame.headers:
-                    msg_frame.headers['transaction'] = request_frame.headers['transaction']
-
-                if any(connection == m['client'] for m in self.messages):
-                    for m in self.messages:
-                        if m['client'] == connection:
-                            m['messages'].append(message_id)
-                else:
-                    self.messages.append({'ids': [message_id], 'client': connection})
-
-                self.respond(str(msg_frame), sub['connection'])
+        if 'transaction' in request_frame.headers:
+            for t in self.transactions:
+                if t['id'] == request_frame.headers['transaction'] and connection == t['beginner']:
+                    t['messages'].append({'destination': request_frame.headers['destination'],
+                                          'message-id': message_id, 'content': request_frame.msg})
+        else:
+            for sub in self.subscriptions:
+                if sub['destination'] == request_frame.headers['destination'] and sub['connection'] != connection:
+                    msg_frame = self.encoder.encode('MESSAGE', **{'destination': request_frame.headers['destination'],
+                                                                  'message-id': message_id, 'subscription': sub['id'],
+                                                                  'msg': request_frame.msg})
+                    self.respond(str(msg_frame), sub['connection'])
         self.receipt('message-'+str(message_id), connection)
 
     def subscribe_frame_received(self, request_frame, connection):
@@ -213,7 +209,7 @@ class Server(object):
             for sub in self.subscriptions:
                 if sub['id'] == request_frame.headers['id']:
                     if sub['connection'] != connection:
-                        error_message = 'Given SUBSCRIBE id: ' + request_frame.headers['id'] + ' is NOT blongs to you'
+                        error_message = 'Given SUBSCRIBE id: ' + request_frame.headers['id'] + ' is NOT belongs to you'
                         self.error(error_message, connection)
                     else:
                         self.subscriptions.remove(sub)
@@ -239,15 +235,16 @@ class Server(object):
         """
         if any(int(request_frame.headers['transaction']) == t['transaction'] and
                connection == t['beginner'] for t in self.transactions):
-            error_message = 'Given Transaction id: ' + request_frame.headers['transaction'] + ' is already registered'
+            error_message = 'Given Transaction id: ' + request_frame.headers['transaction'] + \
+                            ' is already registered from this session'
             self.error(error_message, connection)
         else:
-            self.transactions.append({'id': request_frame.headers['transaction'], 'beginner': connection})
+            self.transactions.append({'id': request_frame.headers['transaction'], 'beginner': connection,
+                                      'messages': []})
 
     def ack_nack_received(self, request_frame):
         """
-        If ACK or NACK frame contains transaction header, forward the frame to the client who started the transaction
-        Else ACK or NACK the message, sender client comes from messages list
+
         :param request_frame: Received ACK or NACK frame
         :return:
         """
@@ -255,19 +252,35 @@ class Server(object):
             for transaction in self.transactions:
                 if transaction['id'] == request_frame.headers['transaction']:
                     self.respond(str(request_frame), transaction['beginner'])
-        else:
-            for m in self.messages:
-                if any(request_frame.headers['id'] == i for i in m['ids']):
-                    self.respond(str(request_frame),m['client'])
 
-    def commit_abort_received(self, request_frame, connection):
+    def abort_received(self, request_frame, connection):
         """
 
         :param request_frame:
         :param connection:
         :return:
         """
-        pass
+        for t in self.transactions:
+            if t['id'] == request_frame.headers['transaction'] and t['beginner'] == connection:
+                self.transactions.remove(t)
+
+    def commit_received(self, request_frame, connection):
+        """
+
+        :param request_frame:
+        :param connection:
+        :return:
+        """
+        for t in self.transactions:
+            if request_frame.headers['transaction'] == t['id'] and connection == t['beginner']:
+                for m in t['messages']:
+                    for sub in self.subscriptions:
+                        if sub['destination'] == m['destination'] and sub['connection'] != connection:
+                            msg_frame = self.encoder.encode('MESSAGE',
+                                                            **{'destination': m['destination'],
+                                                               'message-id': m['message-id'], 'subscription': sub['id'],
+                                                               'msg': m['content']})
+                            self.respond(str(msg_frame), sub['connection'])
 
 
     requests = {
@@ -279,8 +292,8 @@ class Server(object):
         'UNSUBSCRIBE': unsubscribe_frame_received,
         'ACK': ack_nack_received,
         'NACK': ack_nack_received,
-        'ABORT': commit_abort_received,
-        'COMMIT': commit_abort_received,
+        'ABORT': abort_received,
+        'COMMIT': commit_received,
         'BEGIN': begin_received,
     }
 

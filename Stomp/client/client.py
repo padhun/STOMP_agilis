@@ -53,10 +53,10 @@ if __name__ == '__main__':
     t1 = threading.Thread(target=stomp_client.connect,
                           kwargs={'port': 1212, 'accept-version': '1.2,10.1', 'host': 'localhost'})
     t1.start()
-    threading._sleep(5)
+    threading._sleep(3)
     msg_frame = stomp_client.encoder.encode('SUBSCRIBE', **{'destination': 'foo', 'id': 0})
     stomp_client.send(str(msg_frame))
-    threading._sleep(5)
+    threading._sleep(3)
 
     msg_frame = stomp_client.encoder.encode('SUBSCRIBE', **{'destination': 'bar', 'id': 0})
     stomp_client.send(str(msg_frame))
@@ -65,12 +65,30 @@ if __name__ == '__main__':
     t2 = threading.Thread(target=stomp_client_2.connect,
                           kwargs={'port': 1212, 'accept-version': '1.2,10.1', 'host': 'localhost'})
     t2.start()
-    threading._sleep(5)
+    threading._sleep(3)
     msg_frame_2 = stomp_client_2.encoder.encode('SUBSCRIBE', **{'destination': 'foo', 'id': 1})
     stomp_client_2.send(str(msg_frame_2))
 
-    threading._sleep(5)
+    threading._sleep(3)
     msg_frame = stomp_client.encoder.encode('SEND', **{'destination': 'foo', 'msg': 'First message to foo'})
+    stomp_client.send(str(msg_frame))
+
+    threading._sleep(3)
+    msg_frame = stomp_client.encoder.encode('BEGIN', **{'transaction': 'tx1'})
+    stomp_client.send(str(msg_frame))
+
+    threading._sleep(3)
+    msg_frame = stomp_client.encoder.encode('SEND', **{'destination': 'foo', 'transaction': 'tx1',
+                                                       'msg': 'First message to tx1'})
+    stomp_client.send(str(msg_frame))
+
+    threading._sleep(3)
+    msg_frame = stomp_client.encoder.encode('SEND', **{'destination': 'foo', 'transaction': 'tx1',
+                                                       'msg': 'Second message to tx1'})
+    stomp_client.send(str(msg_frame))
+
+    threading._sleep(3)
+    msg_frame = stomp_client.encoder.encode('COMMIT', **{'transaction': 'tx1'})
     stomp_client.send(str(msg_frame))
 
     t1.join()

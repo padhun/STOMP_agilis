@@ -70,10 +70,6 @@ class Client(object):
         send_frame = self.encoder.encode('SEND', **kwargs)
         self.send_frame(str(send_frame))
 
-
-
-
-
 if __name__ == '__main__':
     stomp_client = Client()
     t1 = threading.Thread(target=stomp_client.connect,

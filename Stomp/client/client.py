@@ -1,5 +1,7 @@
 import socket
 import threading
+from _testcapi import get_kwargs
+import uuid
 
 from Stomp.Decoder import Decode
 from Stomp.Utils import Frames
@@ -16,11 +18,12 @@ class Client(object):
         self.encoder = Encode.Encoder()
         self.decoder = Decode.Decoder()
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.transaction_id = str(uuid.uuid4())
 
     def connect(self, port, **kwargs):
         connect_frame = self.encoder.encode('CONNECT', **kwargs)
         self.client_socket.connect((kwargs.get('host'), port))
-        self.send(str(connect_frame))
+        self.send_frame(str(connect_frame))
         while True:
             while True:
                 data = self.client_socket.recv(1024)
@@ -38,7 +41,7 @@ class Client(object):
             print ex
             raise
 
-    def send(self,msg):
+    def send_frame(self,msg):
         print 'Client will send frame: \n' + msg
         totalsent = 0
         while totalsent < len(msg):
@@ -47,6 +50,29 @@ class Client(object):
                 raise RuntimeError("socket connection broken")
             totalsent = totalsent + sent
 
+    def begin(self):
+        print 'Client will begin sending frames'
+        begin_frame = self.encoder.encode('BEGIN', transaction=self.transaction_id)
+        self.send_frame(str(begin_frame))
+
+    def commit(self):
+        print 'Client commits sent frames'
+        commit_frame = self.encoder.encode('COMMIT', transaction=self.transaction_id)
+        self.send_frame(str(commit_frame))
+
+    def abort(self):
+        print 'Client aborts'
+        abort_frame = self.encoder.encode('ABORT', transaction=self.transaction_id)
+        self.send_frame(str(abort_frame))
+        self.client_socket.close()
+
+    def send(self, **kwargs):
+        send_frame = self.encoder.encode('SEND', **kwargs)
+        self.send_frame(str(send_frame))
+
+
+
+
 
 if __name__ == '__main__':
     stomp_client = Client()
@@ -54,12 +80,17 @@ if __name__ == '__main__':
                           kwargs={'port': 1212, 'accept-version': '1.2,10.1', 'host': 'localhost'})
     t1.start()
     threading._sleep(3)
+    stomp_client.begin()
+    stomp_client.send(**{'destination': 'foo', 'msg': 'First message to foo'})
+    stomp_client.commit()
+
+    '''
     msg_frame = stomp_client.encoder.encode('SUBSCRIBE', **{'destination': 'foo', 'id': 0})
-    stomp_client.send(str(msg_frame))
+    stomp_client.send_frame(str(msg_frame))
     threading._sleep(3)
 
     msg_frame = stomp_client.encoder.encode('SUBSCRIBE', **{'destination': 'bar', 'id': 0})
-    stomp_client.send(str(msg_frame))
+    stomp_client.send_frame(str(msg_frame))
 
     stomp_client_2 = Client()
     t2 = threading.Thread(target=stomp_client_2.connect,
@@ -67,29 +98,29 @@ if __name__ == '__main__':
     t2.start()
     threading._sleep(3)
     msg_frame_2 = stomp_client_2.encoder.encode('SUBSCRIBE', **{'destination': 'foo', 'id': 1})
-    stomp_client_2.send(str(msg_frame_2))
+    stomp_client_2.send_frame(str(msg_frame_2))
 
     threading._sleep(3)
     msg_frame = stomp_client.encoder.encode('SEND', **{'destination': 'foo', 'msg': 'First message to foo'})
-    stomp_client.send(str(msg_frame))
+    stomp_client.send_frame(str(msg_frame))
 
     threading._sleep(3)
     msg_frame = stomp_client.encoder.encode('BEGIN', **{'transaction': 'tx1'})
-    stomp_client.send(str(msg_frame))
+    stomp_client.send_frame(str(msg_frame))
 
     threading._sleep(3)
     msg_frame = stomp_client.encoder.encode('SEND', **{'destination': 'foo', 'transaction': 'tx1',
                                                        'msg': 'First message to tx1'})
-    stomp_client.send(str(msg_frame))
+    stomp_client.send_frame(str(msg_frame))
 
     threading._sleep(3)
     msg_frame = stomp_client.encoder.encode('SEND', **{'destination': 'foo', 'transaction': 'tx1',
                                                        'msg': 'Second message to tx1'})
-    stomp_client.send(str(msg_frame))
+    stomp_client.send_frame(str(msg_frame))
 
     threading._sleep(3)
     msg_frame = stomp_client.encoder.encode('COMMIT', **{'transaction': 'tx1'})
-    stomp_client.send(str(msg_frame))
-
+    stomp_client.send_frame(str(msg_frame))
+    '''
     t1.join()
-    t2.join()
+    #t2.join()

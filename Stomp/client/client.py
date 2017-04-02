@@ -2,6 +2,7 @@ import socket
 import threading
 from _testcapi import get_kwargs
 import uuid
+import random
 
 from Stomp.Decoder import Decode
 from Stomp.Utils import Frames
@@ -70,15 +71,32 @@ class Client(object):
         send_frame = self.encoder.encode('SEND', **kwargs)
         self.send_frame(str(send_frame))
 
+    def subscribe(self, **kwargs):
+        print "Client subscribes"
+        subscribe_frame = self.encoder.encode('SUBSCRIBE', **kwargs)
+        self.send_frame(str(subscribe_frame))
+
+    def unsubscribe(self, **kwargs):
+        print "Client unsubscribes"
+        unsubscribe_frame = self.encoder.encode('UNSUBSCRIBE', **kwargs)
+        self.send_frame(str(unsubscribe_frame))
+
 if __name__ == '__main__':
     stomp_client = Client()
     t1 = threading.Thread(target=stomp_client.connect,
                           kwargs={'port': 1212, 'accept-version': '1.2,10.1', 'host': 'localhost'})
     t1.start()
+    id = 1
+    subscribe_id1 = str(id)
+    id += 1
     threading._sleep(3)
     stomp_client.begin()
+    stomp_client.subscribe(**{'destination': 'foo', 'id': subscribe_id1})
+    threading._sleep(3)
     stomp_client.send(**{'destination': 'foo', 'msg': 'First message to foo'})
     stomp_client.commit()
+    threading._sleep(3)
+    stomp_client.unsubscribe(**{'id': subscribe_id1})
 
     '''
     msg_frame = stomp_client.encoder.encode('SUBSCRIBE', **{'destination': 'foo', 'id': 0})

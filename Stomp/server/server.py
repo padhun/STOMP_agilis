@@ -1,6 +1,7 @@
 import socket
 import threading
 import uuid
+import argparse
 
 from Stomp.Decoder import Decode
 from Stomp.Encoder import Encode
@@ -300,5 +301,15 @@ class Server(object):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='STOMP Server')
+    parser.add_argument('--host', action='store', dest='host', type=str,
+                        default='0.0.0.0',
+                        help='Set host or ip (default: 0.0.0.0 (all interfaces))')
+    parser.add_argument('--port', action='store', dest='port', type=int,
+                        default=1212,
+                        help='Set http api port (default: 1212)')
+
+    arg_results = parser.parse_args()
+
     stomp_server = Server()
-    stomp_server.start('localhost', 1212)
+    stomp_server.start(arg_results.host, arg_results.port)

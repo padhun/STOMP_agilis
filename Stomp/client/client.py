@@ -3,6 +3,7 @@ import threading
 from _testcapi import get_kwargs
 import uuid
 import random
+import argparse
 
 from Stomp.Decoder import Decode
 from Stomp.Utils import Frames
@@ -82,9 +83,23 @@ class Client(object):
         self.send_frame(str(unsubscribe_frame))
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='STOMP Client')
+    parser.add_argument('--host', action='store', dest='host', type=str,
+                        default='localhost',
+                        help='Set host or ip (default: localhost)')
+    parser.add_argument('--port', action='store', dest='port', type=int,
+                        default=1212,
+                        help='Set http api port (default: 1212)')
+    parser.add_argument('--accept-version', action='store', dest='accept_version', type=str,
+                        default='1.2',
+                        help='Set STOMP accept-version (default: 1.2)')
+
+    arg_results = parser.parse_args()
+
     stomp_client = Client()
     t1 = threading.Thread(target=stomp_client.connect,
-                          kwargs={'port': 1212, 'accept-version': '1.2,10.1', 'host': 'localhost'})
+                          kwargs={'port': arg_results.port, 'accept-version': arg_results.accept_version,
+                                  'host': arg_results.host})
     t1.start()
     id = 1
     subscribe_id1 = str(id)

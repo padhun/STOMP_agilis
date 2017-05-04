@@ -93,6 +93,9 @@ if __name__ == '__main__':
     parser.add_argument('--accept-version', action='store', dest='accept_version', type=str,
                         default='1.2',
                         help='Set STOMP accept-version (default: 1.2)')
+    parser.add_argument('--destination', action='store', dest='destination', type=str,
+                        default='foo',
+                        help='Set the STOMP destination to subscribe to')
 
     arg_results = parser.parse_args()
 
@@ -104,7 +107,12 @@ if __name__ == '__main__':
     id = 1
     subscribe_id1 = str(id)
     id += 1
+
     threading._sleep(3)
+    stomp_client.subscribe(**{'destination': arg_results.destination, 'id': subscribe_id1})
+    threading._sleep(3)
+    stomp_client.send(**{'destination': arg_results.destination, 'msg': 'Message to '+arg_results.destination})
+    '''threading._sleep(3)
     stomp_client.begin()
     stomp_client.subscribe(**{'destination': 'foo', 'id': subscribe_id1})
     threading._sleep(3)
@@ -112,7 +120,7 @@ if __name__ == '__main__':
     stomp_client.commit()
     threading._sleep(3)
     stomp_client.unsubscribe(**{'id': subscribe_id1})
-
+    '''
     '''
     msg_frame = stomp_client.encoder.encode('SUBSCRIBE', **{'destination': 'foo', 'id': 0})
     stomp_client.send_frame(str(msg_frame))
